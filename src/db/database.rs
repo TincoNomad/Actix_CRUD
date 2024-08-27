@@ -11,15 +11,18 @@ pub struct Database {
 
 impl Database {
     pub async fn init() -> Result<Self, Error> {
+        println!("Iniciando conexión a SurrealDB...");
         let client = Surreal::new::<Ws>("127.0.0.1:8002").await?;
+        println!("Conexión establecida. Iniciando sesión...");
         client
             .signin(Root {
                 username: "root",
                 password: "root",
             })
             .await?;
-        // client.use_ns("surreal").use_db("task").await.unwrap();
+        println!("Sesión iniciada. Seleccionando namespace y base de datos...");
         client.use_ns("surreal").use_db("task").await?;
+        println!("Namespace y base de datos seleccionados.");
         Ok(Database {
             client,
             name_space: String::from("surreal"),

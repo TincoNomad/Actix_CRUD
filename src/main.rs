@@ -1,76 +1,32 @@
-use actix_web ::{get, post, patch, HttpServer, App, web::Data, web::Json, web::Path};
-use crate::models::task::{AddTaskRequest, UpdateTaskUrl, Task};
-use crate::db::{task_data_trait::TaskDataTrait, Database};
-use validator::Validate;
-use error::TaskError;
-mod models;
-mod error;
-mod db;
-
-
-#[get("/task")]
-async fn get_task(db: Data<Database>) -> Result<Json<Vec<Task>>, TaskError> {
-    let tasks = Database::get_all_task(&db).await;
-    match tasks {
-        Some(found_task) => Ok(Json(found_task)),
-        None => Err(TaskError::NoTasksFound)
-    }
-}
-
-#[post("/task")]
-async fn add_task(body: Json<AddTaskRequest>, db: Data<Database>) -> Result<Json<Task>, TaskError> {
-    let is_valid = body.validate();
-    match is_valid {
-        Ok(_) =>{
-            let task_name = body.task_name.clone();
-            let mut buffer = uuid::Uuid::encode_buffer();
-            let new_uuid = uuid::Uuid::new_v4().simple().encode_lower(&mut buffer);
-
-            let new_task = Database::add_task(&db, Task::new(
-                String::from(new_uuid),
-                task_name,
-            )).await;
-
-            match new_task {
-
-                Some(created) =>{
-                    Ok(Json(created))
-                },
-                None => Err(TaskError::TaskCretionError),       
-            }
-        }
-        Err(_) => Err(TaskError::TaskCretionError)
-    }
-}
-
-#[patch("/updatetask/{uuid}")]
-async fn update_task(
-    update_task_url: Path<UpdateTaskUrl>,
-    db: Data<Database>
-) -> Result<Json<Task>, TaskError> {
-    let uuid = update_task_url.into_inner().uuid;
-    let update_result = Database::update_task(&db, uuid).await;
-
-    match update_result {
-        Some(updated_task) => Ok(Json(updated_task)),
-        None => Err(TaskError::NoTaskFoundWithId),
-    }
-}
+use actix_web::{HttpServer, App, web, middleware::Logger};
+use actix_crud::db::Database;
+use actix_crud::handlers;
+use env_logger::Env;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    env_logger::init_from_env(Env::default().default_filter_or("info"));
 
+    println!("Iniciando la aplicación...");
     let db = Database::init().await.expect("Error connecting to database");
-    let db_data =Data::new(db);
+    println!("Conexión a la base de datos establecida.");
+    let db_data = web::Data::new(db);
 
+    println!("Iniciando el servidor HTTP...");
     HttpServer::new(move || {
         App::new()
-        .app_data(db_data.clone())
-        .service(get_task)
-        .service(add_task)
-        .service(update_task)
+            .wrap(Logger::default())
+            .app_data(db_data.clone())
+            .service(
+                web::scope("/api")
+                    .route("/tasks", web::get().to(handlers::get_task))
+                    .route("/tasks", web::post().to(handlers::add_task))
+                    .route("/tasks/{uuid}", web::patch().to(handlers::update_task))
+                    .route("/register", web::post().to(handlers::register))
+                    .route("/login", web::post().to(handlers::login))
+            )
     })
-        .bind("127.0.0.1:8002")?
-        .run()
-        .await
+    .bind("127.0.0.1:8080")?
+    .run()
+    .await
 }

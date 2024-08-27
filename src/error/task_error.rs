@@ -4,7 +4,9 @@ use actix_web::{
 };
 
 use derive_more::Display;
-#[derive(Debug, Display)]
+use serde::Serialize;
+
+#[derive(Debug, Display, Serialize)]
 pub enum TaskError {
     NoTasksFound = 0,
     TaskCretionError = 1,
@@ -15,7 +17,7 @@ impl ResponseError for TaskError {
     fn error_response(&self) -> HttpResponse<actix_web::body::BoxBody>{
         HttpResponse::build(self.status_code())
         .insert_header(ContentType::json())
-        .body(self.to_string())
+        .json(self)
     }
 
     fn status_code(&self) -> StatusCode {

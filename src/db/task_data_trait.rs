@@ -13,24 +13,37 @@ pub trait TaskDataTrait {
 
 #[async_trait]
 impl TaskDataTrait for Database {
-
     async fn get_all_task(db: &Data<Database>) -> Option<Vec<Task>> {
+        println!("Intentando obtener todas las tareas...");
         let result = db.client.select("task").await;
         match result {
-            Ok(all_task) => Some(all_task),
-            Err(_) => None,
+            Ok(all_task) => {
+                println!("Tareas obtenidas con éxito.");
+                Some(all_task)
+            },
+            Err(e) => {
+                println!("Error al obtener tareas: {:?}", e);
+                None
+            },
         }
     }
 
     async fn add_task(db: &Data<Database>, new_task: Task) -> Option<Task> {
+        println!("Intentando añadir una nueva tarea...");
         let created_task = db
             .client
             .create(("task", new_task.uuid.clone()))
             .content(new_task)
             .await;
         match created_task {
-            Ok(created) => created,
-            Err(_) => None,
+            Ok(created) => {
+                println!("Tarea creada con éxito.");
+                created
+            },
+            Err(e) => {
+                println!("Error al crear tarea: {:?}", e);
+                None
+            },
         }
     }
 
