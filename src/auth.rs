@@ -2,7 +2,7 @@ use bcrypt::{hash, verify, DEFAULT_COST};
 use chrono::{Duration, Utc};
 use jsonwebtoken::{encode, EncodingKey, Header};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
+use surrealdb::sql::Thing;
 // use crate::models::User;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -19,7 +19,7 @@ pub fn verify_password(password: &str, hash: &str) -> bool {
     verify(password, hash).unwrap_or(false)
 }
 
-pub fn generate_token(user_id: &Uuid) -> Result<String, jsonwebtoken::errors::Error> {
+pub fn generate_token(user_id: &Thing) -> Result<String, jsonwebtoken::errors::Error> {
     let expiration = Utc::now()
         .checked_add_signed(Duration::hours(24))
         .expect("Valid timestamp")

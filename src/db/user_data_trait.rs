@@ -14,15 +14,21 @@ pub trait UserDataTrait {
 impl UserDataTrait for Database {
     async fn add_user(db: &Data<Database>, new_user: User) -> Option<User> {
         println!("Intentando añadir un nuevo usuario...");
-        let created_user = db
+        let created_user: Result<Vec<User>, Error> = db
             .client
-            .create(("user", new_user.id.to_string()))
-            .content(new_user)
+            .create("user")
+            .content(&new_user)
             .await;
+        
         match created_user {
-            Ok(created) => {
-                println!("Usuario creado con éxito.");
-                created
+            Ok(mut users) => {
+                if let Some(user) = users.pop() {
+                    println!("Usuario creado con éxito.");
+                    Some(user)
+                } else {
+                    println!("No se pudo crear el usuario.");
+                    None
+                }
             },
             Err(e) => {
                 println!("Error al crear usuario: {:?}", e);
@@ -33,21 +39,21 @@ impl UserDataTrait for Database {
 
     async fn find_user_by_username(db: &Data<Database>, username: &str) -> Option<User> {
         println!("Buscando usuario por nombre de usuario: {}", username);
-        let result: Result<Option<User>, Error> = db
+        let result = db
             .client
             .query("SELECT * FROM user WHERE username = $username")
             .bind(("username", username))
-            .await
-            .and_then(|mut response| response.take(0));
+            .await;
         
         match result {
-            Ok(user) => {
-                if user.is_some() {
-                    println!("Usuario encontrado.");
-                } else {
-                    println!("Usuario no encontrado.");
+            Ok(mut response) => {
+                match response.take::<Vec<User>>(0) {
+                    Ok(users) => users.into_iter().next(),
+                    Err(e) => {
+                        println!("Error al deserializar usuario: {:?}", e);
+                        None
+                    }
                 }
-                user
             },
             Err(e) => {
                 println!("Error al buscar usuario: {:?}", e);

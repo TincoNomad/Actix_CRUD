@@ -43,9 +43,12 @@ pub async fn login(user_data: web::Json<LoginRequest>, db: web::Data<Database>) 
         return HttpResponse::Unauthorized().finish();
     }
 
-    let token = match generate_token(&user.id) {
-        Ok(token) => token,
-        Err(_) => return HttpResponse::InternalServerError().finish(),
+    let token = match user.id {
+        Some(ref id) => match generate_token(id) {
+            Ok(token) => token,
+            Err(_) => return HttpResponse::InternalServerError().finish(),
+        },
+        None => return HttpResponse::InternalServerError().finish(),
     };
 
     HttpResponse::Ok().json(AuthResponse { token })
