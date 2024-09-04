@@ -1,60 +1,60 @@
 use crate::models::entities::task::Task;
 use crate::infrastructure::database::surrealdb::Database;
-use actix_web::web::Data;
+// use actix_web::web::Data;
 use surrealdb::Error;
 use async_trait::async_trait;
 
 #[async_trait]
 pub trait TaskDataTrait {
-    async fn get_all_tasks(db: &Data<Database>) -> Option<Vec<Task>>;
-    async fn add_task(db: &Data<Database>, new_task: Task) -> Option<Task>;
-    async fn update_task(db: &Data<Database>, uuid: String) -> Option<Task>;
+    async fn get_all_tasks(&self) -> Option<Vec<Task>>;
+    async fn add_task(&self, new_task: Task) -> Option<Task>;
+    async fn update_task(&self, uuid: String) -> Option<Task>;
 }
 
 #[async_trait]
 impl TaskDataTrait for Database {
-    async fn get_all_tasks(db: &Data<Database>) -> Option<Vec<Task>> {
-        println!("Attempting to fetch all tasks...");
-        let result = db.client.select("task").await;
+    async fn get_all_tasks(&self) -> Option<Vec<Task>> {
+        println!("Intentando obtener todas las tareas...");
+        let result = self.client.select("task").await;
         match result {
             Ok(all_tasks) => {
-                println!("Tasks fetched successfully.");
+                println!("Tareas obtenidas con éxito.");
                 Some(all_tasks)
             },
             Err(e) => {
-                println!("Error fetching tasks: {:?}", e);
+                println!("Error al obtener las tareas: {:?}", e);
                 None
             },
         }
     }
 
-    async fn add_task(db: &Data<Database>, new_task: Task) -> Option<Task> {
-        println!("Attempting to add a new task...");
-        let created_task = db
+    async fn add_task(&self, new_task: Task) -> Option<Task> {
+        println!("Intentando agregar una nueva tarea...");
+        let created_task = self
             .client
             .create(("task", new_task.uuid.clone()))
             .content(new_task)
             .await;
         match created_task {
             Ok(created) => {
-                println!("Task created successfully.");
+                println!("Tarea creada con éxito.");
                 created
             },
             Err(e) => {
-                println!("Error creating task: {:?}", e);
+                println!("Error al crear la tarea: {:?}", e);
                 None
             },
         }
     }
 
-    async fn update_task(db: &Data<Database>, uuid: String) -> Option<Task> {
-        let find_task: Result<Option<Task>, Error> = db.client.select(("task", &uuid)).await;
+    async fn update_task(&self, uuid: String) -> Option<Task> {
+        let find_task: Result<Option<Task>, Error> = self.client.select(("task", &uuid)).await;
 
         match find_task {
             Ok(found) => {
                 match found {
                     Some(_found_task) => {
-                        let updated_task: Result<Option<Task>, Error> = db
+                        let updated_task: Result<Option<Task>, Error> = self
                             .client
                             .update(("task", &uuid))
                             .merge(Task {
