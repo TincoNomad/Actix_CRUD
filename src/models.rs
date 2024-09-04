@@ -1,5 +1,5 @@
-pub mod task;
-pub mod user;
+pub mod entities;
+pub mod traits;
 
-pub use task::Task;
-pub use user::User;
+pub use entities::task::Task;
+pub use entities::user::User;

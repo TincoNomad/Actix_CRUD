@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use surrealdb::sql::Thing;
-use crate::auth::hash_password;
+use crate::infrastructure::auth::jwt::hash_password;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct User {
@@ -11,6 +11,7 @@ pub struct User {
 }
 
 impl User {
+    // Create a new user
     pub fn new(username: String, password: String) -> Result<Self, bcrypt::BcryptError> {
         let hashed_password = hash_password(&password)?;
         Ok(User {

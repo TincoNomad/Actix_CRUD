@@ -9,7 +9,7 @@ use serde::Serialize;
 #[derive(Debug, Display, Serialize)]
 pub enum TaskError {
     NoTasksFound = 0,
-    TaskCretionError = 1,
+    TaskCreationError = 1,
     NoTaskFoundWithId = 2,
 }
 
@@ -23,7 +23,7 @@ impl ResponseError for TaskError {
     fn status_code(&self) -> StatusCode {
         match self {
             TaskError::NoTasksFound => StatusCode::NOT_FOUND,
-            TaskError::TaskCretionError => StatusCode::INTERNAL_SERVER_ERROR,
+            TaskError::TaskCreationError => StatusCode::INTERNAL_SERVER_ERROR,
             TaskError::NoTaskFoundWithId => StatusCode::NOT_FOUND,
         }
     }

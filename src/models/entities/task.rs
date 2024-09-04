@@ -19,7 +19,8 @@ pub struct Task {
 }
 
 impl Task {
-    pub fn new( uuid: String, task_name: String) -> Task{
-        Task {uuid, task_name}
+    // Create a new task
+    pub fn new(uuid: String, task_name: String) -> Task {
+        Task { uuid, task_name }
     }
 }

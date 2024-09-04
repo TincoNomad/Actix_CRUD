@@ -1,35 +1,35 @@
-use crate::models::Task;
-use crate::db::Database;
-use surrealdb::Error;
+use crate::models::entities::task::Task;
+use crate::infrastructure::database::surrealdb::Database;
 use actix_web::web::Data;
+use surrealdb::Error;
 use async_trait::async_trait;
 
 #[async_trait]
 pub trait TaskDataTrait {
-    async fn get_all_task(db: &Data<Database>) -> Option<Vec<Task>>;
+    async fn get_all_tasks(db: &Data<Database>) -> Option<Vec<Task>>;
     async fn add_task(db: &Data<Database>, new_task: Task) -> Option<Task>;
     async fn update_task(db: &Data<Database>, uuid: String) -> Option<Task>;
 }
 
 #[async_trait]
 impl TaskDataTrait for Database {
-    async fn get_all_task(db: &Data<Database>) -> Option<Vec<Task>> {
-        println!("Intentando obtener todas las tareas...");
+    async fn get_all_tasks(db: &Data<Database>) -> Option<Vec<Task>> {
+        println!("Attempting to fetch all tasks...");
         let result = db.client.select("task").await;
         match result {
-            Ok(all_task) => {
-                println!("Tareas obtenidas con éxito.");
-                Some(all_task)
+            Ok(all_tasks) => {
+                println!("Tasks fetched successfully.");
+                Some(all_tasks)
             },
             Err(e) => {
-                println!("Error al obtener tareas: {:?}", e);
+                println!("Error fetching tasks: {:?}", e);
                 None
             },
         }
     }
 
     async fn add_task(db: &Data<Database>, new_task: Task) -> Option<Task> {
-        println!("Intentando añadir una nueva tarea...");
+        println!("Attempting to add a new task...");
         let created_task = db
             .client
             .create(("task", new_task.uuid.clone()))
@@ -37,11 +37,11 @@ impl TaskDataTrait for Database {
             .await;
         match created_task {
             Ok(created) => {
-                println!("Tarea creada con éxito.");
+                println!("Task created successfully.");
                 created
             },
             Err(e) => {
-                println!("Error al crear tarea: {:?}", e);
+                println!("Error creating task: {:?}", e);
                 None
             },
         }
@@ -52,7 +52,7 @@ impl TaskDataTrait for Database {
 
         match find_task {
             Ok(found) => {
-                match  found {
+                match found {
                     Some(_found_task) => {
                         let updated_task: Result<Option<Task>, Error> = db
                             .client

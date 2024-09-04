@@ -1,6 +1,5 @@
-use crate::models::User;
-use crate::db::Database;
-use surrealdb::Error;
+use crate::models::entities::user::User;
+use crate::infrastructure::database::surrealdb::Database;
 use actix_web::web::Data;
 use async_trait::async_trait;
 
@@ -14,27 +13,27 @@ pub trait UserDataTrait {
 impl UserDataTrait for Database {
     async fn add_user(db: &Data<Database>, new_user: User) -> Option<User> {
         println!("Intentando añadir un nuevo usuario...");
-        let created_user: Result<Vec<User>, Error> = db
+        let created_user = db
             .client
             .create("user")
             .content(&new_user)
             .await;
         
-        match created_user {
-            Ok(mut users) => {
-                if let Some(user) = users.pop() {
-                    println!("Usuario creado con éxito.");
-                    Some(user)
-                } else {
-                    println!("No se pudo crear el usuario.");
+            match created_user {
+                Ok(mut users) => {
+                    if let Some(user) = users.pop() {
+                        println!("Usuario creado con éxito.");
+                        Some(user)
+                    } else {
+                        println!("No se pudo crear el usuario.");
+                        None
+                    }
+                },
+                Err(e) => {
+                    println!("Error al crear usuario: {:?}", e);
                     None
-                }
-            },
-            Err(e) => {
-                println!("Error al crear usuario: {:?}", e);
-                None
-            },
-        }
+                },
+            }
     }
 
     async fn find_user_by_username(db: &Data<Database>, username: &str) -> Option<User> {

@@ -1,8 +1,9 @@
 use actix_web::{web, HttpResponse, Responder};
 use serde::{Deserialize, Serialize};
-use crate::models::User;
-use crate::auth::{verify_password, generate_token};
-use crate::db::{Database, user_data_trait::UserDataTrait};
+use crate::models::entities::user::User;
+use crate::infrastructure::auth::jwt::{verify_password, generate_token};
+use crate::infrastructure::database::surrealdb::Database;
+use crate::models::traits::user_data_trait::UserDataTrait;
 
 #[derive(Deserialize)]
 pub struct RegisterRequest {
@@ -27,14 +28,14 @@ pub async fn register(user_data: web::Json<RegisterRequest>, db: web::Data<Datab
         Err(_) => return HttpResponse::InternalServerError().finish(),
     };
 
-    match Database::add_user(&db, user).await {
+    match <Database as UserDataTrait>::add_user(&db, user).await {
         Some(_) => HttpResponse::Ok().json("User registered successfully"),
         None => HttpResponse::InternalServerError().finish(),
     }
 }
 
 pub async fn login(user_data: web::Json<LoginRequest>, db: web::Data<Database>) -> impl Responder {
-    let user = match Database::find_user_by_username(&db, &user_data.username).await {
+    let user = match <Database as UserDataTrait>::find_user_by_username(&db, &user_data.username).await {
         Some(user) => user,
         None => return HttpResponse::Unauthorized().finish(),
     };
