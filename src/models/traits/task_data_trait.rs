@@ -4,32 +4,41 @@ use crate::infrastructure::database::surrealdb::Database;
 use surrealdb::Error;
 use async_trait::async_trait;
 
+// TaskDataTrait defines the interface for task-related database operations
 #[async_trait]
 pub trait TaskDataTrait {
+    // Retrieve all tasks from the database
     async fn get_all_tasks(&self) -> Option<Vec<Task>>;
+    
+    // Add a new task to the database
     async fn add_task(&self, new_task: Task) -> Option<Task>;
+    
+    // Update an existing task in the database
     async fn update_task(&self, uuid: String) -> Option<Task>;
 }
 
+// Implementation of TaskDataTrait for the Database struct
 #[async_trait]
 impl TaskDataTrait for Database {
+    // Retrieve all tasks from the database
     async fn get_all_tasks(&self) -> Option<Vec<Task>> {
-        println!("Intentando obtener todas las tareas...");
+        println!("Attempting to retrieve all tasks...");
         let result = self.client.select("task").await;
         match result {
             Ok(all_tasks) => {
-                println!("Tareas obtenidas con éxito.");
+                println!("Tasks retrieved successfully.");
                 Some(all_tasks)
             },
             Err(e) => {
-                println!("Error al obtener las tareas: {:?}", e);
+                println!("Error retrieving tasks: {:?}", e);
                 None
             },
         }
     }
 
+    // Add a new task to the database
     async fn add_task(&self, new_task: Task) -> Option<Task> {
-        println!("Intentando agregar una nueva tarea...");
+        println!("Attempting to add a new task...");
         let created_task = self
             .client
             .create(("task", new_task.uuid.clone()))
@@ -37,16 +46,17 @@ impl TaskDataTrait for Database {
             .await;
         match created_task {
             Ok(created) => {
-                println!("Tarea creada con éxito.");
+                println!("Task created successfully.");
                 created
             },
             Err(e) => {
-                println!("Error al crear la tarea: {:?}", e);
+                println!("Error creating task: {:?}", e);
                 None
             },
         }
     }
 
+    // Update an existing task in the database
     async fn update_task(&self, uuid: String) -> Option<Task> {
         let find_task: Result<Option<Task>, Error> = self.client.select(("task", &uuid)).await;
 

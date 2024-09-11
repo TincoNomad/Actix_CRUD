@@ -2,16 +2,21 @@ use crate::models::entities::user::User;
 use crate::infrastructure::database::surrealdb::Database;
 use async_trait::async_trait;
 
+// UserDataTrait defines the interface for user-related database operations
 #[async_trait]
 pub trait UserDataTrait {
+    // Add a new user to the database
     async fn add_user(&self, new_user: User) -> Option<User>;
+    // Find a user by their username
     async fn find_user_by_username(&self, username: &str) -> Option<User>;
 }
 
+// Implementation of UserDataTrait for the Database struct
 #[async_trait]
 impl UserDataTrait for Database {
+    // Add a new user to the database
     async fn add_user(&self, new_user: User) -> Option<User> {
-        println!("Intentando añadir un nuevo usuario...");
+        println!("Attempting to add a new user...");
         let created_user = self
             .client
             .create("user")
@@ -21,22 +26,23 @@ impl UserDataTrait for Database {
         match created_user {
             Ok(mut users) => {
                 if let Some(user) = users.pop() {
-                    println!("Usuario creado con éxito.");
+                    println!("User created successfully.");
                     Some(user)
                 } else {
-                    println!("No se pudo crear el usuario.");
+                    println!("Failed to create user.");
                     None
                 }
             },
             Err(e) => {
-                println!("Error al crear usuario: {:?}", e);
+                println!("Error creating user: {:?}", e);
                 None
             },
         }
     }
 
+    // Find a user by their username
     async fn find_user_by_username(&self, username: &str) -> Option<User> {
-        println!("Buscando usuario por nombre de usuario: {}", username);
+        println!("Searching for user by username: {}", username);
         let result = self
             .client
             .query("SELECT * FROM user WHERE username = $username")
@@ -48,13 +54,13 @@ impl UserDataTrait for Database {
                 match response.take::<Vec<User>>(0) {
                     Ok(users) => users.into_iter().next(),
                     Err(e) => {
-                        println!("Error al deserializar usuario: {:?}", e);
+                        println!("Error deserializing user: {:?}", e);
                         None
                     }
                 }
             },
             Err(e) => {
-                println!("Error al buscar usuario: {:?}", e);
+                println!("Error searching for user: {:?}", e);
                 None
             },
         }

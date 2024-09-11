@@ -5,21 +5,28 @@ use env_logger::Env;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    // Initialize the logger with default settings
     env_logger::init_from_env(Env::default().default_filter_or("info"));
 
-    println!("Iniciando la aplicación...");
+    println!("Starting the application...");
+    // Initialize the database connection
     let db = Database::init().await.expect("Error connecting to database");
-    println!("Conexión a la base de datos establecida.");
+    println!("Database connection established.");
+    // Wrap the database connection in a web::Data for sharing across threads
     let db_data = web::Data::new(db);
 
-    println!("Iniciando el servidor HTTP...");
+    println!("Starting the HTTP server...");
+    // Create and run the HTTP server
     HttpServer::new(move || {
         App::new()
+            // Add logger middleware
             .wrap(Logger::default())
+            // Share the database connection
             .app_data(db_data.clone())
+            // Configure the API routes
             .configure(routes::config)
     })
-    .bind("127.0.0.1:8080")?
+    .bind("127.0.0.1:8080")?  // Bind the server to localhost on port 8080
     .run()
     .await
 }
